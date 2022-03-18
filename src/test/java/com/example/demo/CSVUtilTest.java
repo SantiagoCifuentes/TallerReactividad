@@ -72,7 +72,7 @@ public class CSVUtilTest {
         List<Player> list = CsvUtilFile.getPlayers();
         Flux<Player> listFlux = Flux.fromStream(list.parallelStream()).cache();
         Mono<Map<String, Collection<Player>>> listFilter = listFlux
-                .filter(player -> player.age>34 && player.club.equals("Juventus"))
+                .filter(player -> player.age>=34 && player.club.equals("Juventus"))
                 .distinct()
                 .collectMultimap(Player::getClub);
 
@@ -85,7 +85,7 @@ public class CSVUtilTest {
             {
                 System.out.println("Nombre: " + player.name + ", Edad: " +player.age );
                 assert player.club.equals("Juventus");
-                assert player.age >34;
+                assert player.age >=34;
             });
 
         } );
@@ -101,20 +101,25 @@ public class CSVUtilTest {
         Mono<Map<String, Collection<Player>>> listFilter = listFlux
 
                 //.filter(player->player.national.equals("Argentina")&& player.winners>5)
-               //
-                .collectMultimap(Player::getClub);
+                .sort(Comparator.comparing(Player::getWinners).reversed())
+                .filter(player -> player.winners>84)
+                .distinct()
+
+                .collectMultimap(Player::getNational);
 
 
                 //.collectMultimap(Player::getNational);
 
+        //imprime la lista de países con sus respectivos
+        // jugadores con sus victorias de mayor a menor, teniendo en cuenta el filter aplicado en la línea 105
+        //si se borra este filter aparecerían todos los paises con sus jugadores
         listFilter.block().forEach((nacionalidad,players)->
         {
             System.out.println(nacionalidad);
             players.forEach(player ->
             {
-                System.out.println("Nombre: " + player.name + ", Nacionalidad: " +player.national + " Victorias: " +player.winners );
-                assert player.national.matches(String.valueOf(1));
-                assert player.winners>5;
+                System.out.println("Nombre: " + player.name + ", Nacionalidad: " +player.national + ", Victorias: " +player.winners );
+
             });
         });
 
